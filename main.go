@@ -127,8 +127,9 @@ func main() {
 	go goji.Serve()
 
 	for {
+		log.Println("update")
 		g.update()
-		server.BroadcastTo("game", "gamestate", string(g.getState()))
+		go server.BroadcastTo("game", "gamestate", string(g.getState()))
 		time.Sleep(time.Second / 15)
 	}
 }
