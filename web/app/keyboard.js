@@ -14,7 +14,6 @@ define(['exports'], function (exports) {
         }
         if(e.type == "keyup") {
             if(keyStates[e.keyCode]){
-                console.log(e.keyCode);
                 keyStates[e.keyCode] = false;
                 if(keyUpBinds[e.keyCode]) {
                     keyUpBinds[e.keyCode]();
