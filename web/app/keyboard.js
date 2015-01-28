@@ -1,22 +1,22 @@
 define(['exports'], function (exports) {
     var keyStates = {};
-    var keyUpBinds = {};
-    var keyDownBinds = {};
+    var keyUpBinds = [];
+    var keyDownBinds = [];
 
     function onKeyboard(e) {
         if(e.type == "keydown") {
             if(!keyStates[e.keyCode]) {
                 keyStates[e.keyCode] = true;
-                if(keyDownBinds[e.keyCode]) {
-                    keyDownBinds[e.keyCode]();
+                for(var i = 0; i < keyDownBinds.length; i++){
+                    keyDownBinds[i](e);
                 }
             }
         }
         if(e.type == "keyup") {
             if(keyStates[e.keyCode]){
                 keyStates[e.keyCode] = false;
-                if(keyUpBinds[e.keyCode]) {
-                    keyUpBinds[e.keyCode]();
+                for(var i = 0; i < keyUpBinds.length; i++){
+                    keyUpBinds[i](e);
                 }
             }
         }
@@ -44,11 +44,11 @@ define(['exports'], function (exports) {
         keyStates[key]=false;
     }
 
-    exports.bindKeydown = function(key, func) {
-        keyDownBinds[key] = func;
+    exports.bindKeydown = function(func) {
+        keyDownBinds.push(func);
     }
 
-    exports.bindKeyup = function(key, func) {
-        keyUpBinds[key] = func;
+    exports.bindKeyup = function(func) {
+        keyUpBinds.push(func);
     }
 });

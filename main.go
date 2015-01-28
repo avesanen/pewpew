@@ -19,7 +19,7 @@ type eventMouseDown struct {
 	Y float64 `json:"y"`
 }
 type eventKeyboard struct {
-	Key string `json:"key"`
+	KeyCode int `json:"key"`
 }
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 		// Add player to the game
 		p := &player{}
 		p.Type = "player"
-		p.SetLocation(Vector{10, 10})
+		p.SetLocation(Vector{100, 100})
 		g.Players = append(g.Players, p)
 
 		// When player disconnects, remove it from game.
@@ -72,7 +72,6 @@ func main() {
 
 			// Append bullet to game
 			g.Bullets = append(g.Bullets, b)
-			log.Println(g.Bullets)
 		})
 
 		so.On("keyup", func(msg string) {
@@ -82,19 +81,15 @@ func main() {
 				log.Println("Can't unmarshal:", err.Error())
 				return
 			}
-			switch e.Key {
-			case "a":
+			switch e.KeyCode {
+			case 65:
 				p.Velocity[0] += 100
-				break
-			case "d":
+			case 68:
 				p.Velocity[0] -= 100
-				break
-			case "w":
+			case 87:
 				p.Velocity[1] += 100
-				break
-			case "s":
+			case 83:
 				p.Velocity[1] -= 100
-				break
 			}
 		})
 
@@ -105,19 +100,15 @@ func main() {
 				log.Println("Can't unmarshal:", err.Error())
 				return
 			}
-			switch e.Key {
-			case "a":
+			switch e.KeyCode {
+			case 65:
 				p.Velocity[0] -= 100
-				break
-			case "d":
+			case 68:
 				p.Velocity[0] += 100
-				break
-			case "w":
+			case 87:
 				p.Velocity[1] -= 100
-				break
-			case "s":
+			case 83:
 				p.Velocity[1] += 100
-				break
 			}
 		})
 	})
@@ -127,7 +118,6 @@ func main() {
 	go goji.Serve()
 
 	for {
-		log.Println("update")
 		g.update()
 		go server.BroadcastTo("game", "gamestate", string(g.getState()))
 		time.Sleep(time.Second / 15)

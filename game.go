@@ -30,7 +30,7 @@ func (g *game) deleteBullet(b *bullet) {
 
 func (g *game) update() {
 	for _, p := range g.Players {
-		p.Update(time.Since(g.LastUpdate))
+		p.update(time.Since(g.LastUpdate))
 		if p.Location[0] < 0.0 {
 			p.Location[0] = 0.0
 		}
@@ -47,7 +47,7 @@ func (g *game) update() {
 
 	var newbullets []*bullet
 	for _, b := range g.Bullets {
-		b.Update(time.Since(g.LastUpdate))
+		b.update(time.Since(g.LastUpdate))
 		if b.Location[0] > 0.0 && b.Location[0] < g.GameArea[0] &&
 			b.Location[1] > 0.0 && b.Location[1] < g.GameArea[1] {
 			newbullets = append(newbullets, b)
@@ -57,6 +57,7 @@ func (g *game) update() {
 	g.LastUpdate = time.Now()
 }
 
+// Physics sub-entity
 type physics struct {
 	Location Vector `json:"location"`
 	Velocity Vector `json:"velocity"`
@@ -78,19 +79,31 @@ func (p *physics) SetLocation(v Vector) {
 	p.Location = v
 }
 
-func (p *physics) Update(dt time.Duration) {
+func (p *physics) update(dt time.Duration) {
 	p.Location[0] += p.Velocity[0] * dt.Seconds()
 	p.Location[1] += p.Velocity[1] * dt.Seconds()
 }
 
+// Entity type
 type entity struct {
 	Type string `json:"type"`
 	physics
 }
+
+// Player entity
 type player struct {
 	entity
 }
 
+func (p *player) update(dt time.Duration) {
+	p.entity.update(dt)
+}
+
+// Bullet entity
 type bullet struct {
 	entity
+}
+
+func (b *bullet) update(dt time.Duration) {
+	b.entity.update(dt)
 }

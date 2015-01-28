@@ -15,32 +15,14 @@ require(["app/keyboard", "app/sprites", "app/particles", "app/sfx"],
 		sprites.init('spriteCanvas');
 		sfx.init([{name:"firework", url:"/sounds/firework.mp3"}]);
 
-		// Keyboard bindings (quick and dirty edition)
-		keyboard.bindKeyup(87, function(){
-			socket.emit('keyup', JSON.stringify({"key":"w"}));
-		});
-		keyboard.bindKeyup(65, function(){
-			socket.emit('keyup', JSON.stringify({"key":"a"}));
-		});
-		keyboard.bindKeyup(83, function(){
-			socket.emit('keyup', JSON.stringify({"key":"s"}));
-		});
-		keyboard.bindKeyup(68, function(){
-			socket.emit('keyup', JSON.stringify({"key":"d"}));
+		keyboard.bindKeyup(function(e){
+			socket.emit('keyup', JSON.stringify({"key":e.keyCode}));
 		});
 
-		keyboard.bindKeydown(87, function(){
-			socket.emit('keydown', JSON.stringify({"key":"w"}));
+		keyboard.bindKeydown(function(e){
+			socket.emit('keydown', JSON.stringify({"key":e.keyCode}));
 		});
-		keyboard.bindKeydown(65, function(){
-			socket.emit('keydown', JSON.stringify({"key":"a"}));
-		});
-		keyboard.bindKeydown(83, function(){
-			socket.emit('keydown', JSON.stringify({"key":"s"}));
-		});
-		keyboard.bindKeydown(68, function(){
-			socket.emit('keydown', JSON.stringify({"key":"d"}));
-		});
+
 
 		window.addEventListener('mousedown', function(e) {
 			var x = e.x||e.clientX;
