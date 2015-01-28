@@ -33,7 +33,6 @@ define(['exports'], function (exports) {
         canvas.width = canvas.width;
         for(var i = 0; i < sprites.length; i++){
             size = 10
-            console.log(sprites[i].type);
             if (sprites[i].type == "player") {
                 ctx.fillStyle = toCss([255,0,255,255]);
                 size = 10

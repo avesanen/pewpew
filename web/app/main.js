@@ -43,7 +43,6 @@ require(["app/keyboard", "app/sprites", "app/particles", "app/sfx"],
 		});
 
 		window.addEventListener('mousedown', function(e) {
-			console.log(e);
 			var x = e.x||e.clientX;
   			var y = e.y||e.clientY;
   			socket.emit('mousedown', JSON.stringify({"x":x, "y":y}));
