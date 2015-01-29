@@ -5,32 +5,31 @@ requirejs.config({
 	}
 });
 
-require(["app/keyboard", "app/sprites", "app/particles", "app/sfx"],
-	function (keyboard, sprites, particles, sfx) {
+require(["app/keyboard", "app/sprites", "app/particles", "app/sfx", "app/websocket"],
+	function (keyboard, sprites, particles, sfx, websocket) {
 		var fps = 60;
-		var socket = io();
-
+		websocket.connect();
+		
 		// Initialize mainCanvas
 		particles.init('particleCanvas');
 		sprites.init('spriteCanvas');
-		sfx.init([{name:"firework", url:"/sounds/firework.mp3"}]);
 
 		keyboard.bindKeyup(function(e){
-			socket.emit('keyup', JSON.stringify({"key":e.keyCode}));
+			websocket.send('keyup', JSON.stringify({"key":e.keyCode}));
 		});
 
 		keyboard.bindKeydown(function(e){
-			socket.emit('keydown', JSON.stringify({"key":e.keyCode}));
+			websocket.send('keydown', JSON.stringify({"key":e.keyCode}));
 		});
 
 
 		window.addEventListener('mousedown', function(e) {
 			var x = e.x||e.clientX;
   			var y = e.y||e.clientY;
-  			socket.emit('mousedown', JSON.stringify({"x":x, "y":y}));
+  			websocket.send('mousedown', JSON.stringify({"x":x, "y":y}));
 		});
 
-		socket.on('gamestate', function(msg) {
+		websocket.on('gamestate', function(msg) {
 			gamestate = JSON.parse(msg);
 			entities = gamestate.players;
 			if (gamestate.bullets) {

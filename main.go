@@ -1,9 +1,8 @@
 package main
 
 import (
-	//"encoding/base64"
 	"encoding/json"
-	"github.com/googollee/go-socket.io"
+	"github.com/avesanen/websocks"
 	"github.com/zenazn/goji"
 	"log"
 	"net/http"
@@ -26,15 +25,8 @@ func main() {
 	g := &game{}
 	g.GameArea = [2]float64{640, 480}
 
-	server, err := socketio.NewServer(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Set handler for player connection
-	server.On("connection", func(so socketio.Socket) {
-		so.Join("game")
-
+	server := websocks.NewServer()
+	server.OnConnect(func(c *websocks.Conn) {
 		// Add player to the game
 		p := &player{}
 		p.Type = "player"
@@ -42,7 +34,7 @@ func main() {
 		g.Players = append(g.Players, p)
 
 		// When player disconnects, remove it from game.
-		so.On("disconnection", func() {
+		c.On("disconnect", func(m websocks.Msg) {
 			for i, k := range g.Players {
 				if k == p {
 					g.Players = append(g.Players[:i], g.Players[i+1:]...)
@@ -50,11 +42,10 @@ func main() {
 			}
 		})
 
-		// Handler on mousedown from frontend
-		so.On("mousedown", func(msg string) {
+		c.On("mousedown", func(m websocks.Msg) {
 			// Unmarshal mousedown event
 			var e eventMouseDown
-			err := json.Unmarshal([]byte(msg), &e)
+			err := json.Unmarshal([]byte(m.Message), &e)
 			if err != nil {
 				log.Println("Can't unmarshal:", err.Error())
 				return
@@ -74,9 +65,9 @@ func main() {
 			g.Bullets = append(g.Bullets, b)
 		})
 
-		so.On("keyup", func(msg string) {
+		c.On("keyup", func(m websocks.Msg) {
 			var e eventKeyboard
-			err := json.Unmarshal([]byte(msg), &e)
+			err := json.Unmarshal([]byte(m.Message), &e)
 			if err != nil {
 				log.Println("Can't unmarshal:", err.Error())
 				return
@@ -90,36 +81,37 @@ func main() {
 				p.Velocity[1] += 100
 			case 83:
 				p.Velocity[1] -= 100
+			}
+		})
+		c.On("keydown", func(m websocks.Msg) {
+			var e eventKeyboard
+			err := json.Unmarshal([]byte(m.Message), &e)
+			if err != nil {
+				log.Println("Can't unmarshal:", err.Error())
+				return
+			}
+			switch e.KeyCode {
+			case 65:
+				p.Velocity[0] -= 100
+			case 68:
+				p.Velocity[0] += 100
+			case 87:
+				p.Velocity[1] -= 100
+			case 83:
+				p.Velocity[1] += 100
 			}
 		})
 
-		so.On("keydown", func(msg string) {
-			var e eventKeyboard
-			err := json.Unmarshal([]byte(msg), &e)
-			if err != nil {
-				log.Println("Can't unmarshal:", err.Error())
-				return
-			}
-			switch e.KeyCode {
-			case 65:
-				p.Velocity[0] -= 100
-			case 68:
-				p.Velocity[0] += 100
-			case 87:
-				p.Velocity[1] -= 100
-			case 83:
-				p.Velocity[1] += 100
-			}
-		})
 	})
-
-	goji.Get("/socket.io/", server)
+	goji.Get("/ws/", server.WebsocketHandler)
 	goji.Get("/*", http.FileServer(http.Dir("./web")))
 	go goji.Serve()
 
 	for {
 		g.update()
-		go server.BroadcastTo("game", "gamestate", string(g.getState()))
+		for _, c := range server.Conns {
+			c.Send(websocks.Msg{Type: "gamestate", Message: string(g.getState())})
+		}
 		time.Sleep(time.Second / 15)
 	}
 }
