@@ -29,6 +29,12 @@ require(["app/keyboard", "app/sprites", "app/particles", "app/sfx", "app/websock
   			websocket.send('mousedown', JSON.stringify({"x":x, "y":y}));
 		});
 
+		window.addEventListener('mousemove', function(e) {
+			var x = e.x||e.clientX;
+  			var y = e.y||e.clientY;
+  			websocket.send('mouseover', JSON.stringify({"x":x, "y":y}));
+		});
+
 		websocket.on('gamestate', function(msg) {
 			gamestate = JSON.parse(msg);
 			entities = gamestate.players;

@@ -93,6 +93,7 @@ type entity struct {
 // Player entity
 type player struct {
 	entity
+	Aiming Vector `json:"aiming"`
 }
 
 func (p *player) update(dt time.Duration) {

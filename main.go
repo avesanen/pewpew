@@ -65,6 +65,17 @@ func main() {
 			g.Bullets = append(g.Bullets, b)
 		})
 
+		c.On("mouseover", func(m websocks.Msg) {
+			// Unmarshal mousedown event
+			var e eventMouseDown
+			err := json.Unmarshal([]byte(m.Message), &e)
+			if err != nil {
+				log.Println("Can't unmarshal:", err.Error())
+				return
+			}
+			p.Aiming = Vector{e.X, e.Y}
+		})
+
 		c.On("keyup", func(m websocks.Msg) {
 			var e eventKeyboard
 			err := json.Unmarshal([]byte(m.Message), &e)

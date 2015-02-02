@@ -30,21 +30,36 @@ define(['exports'], function (exports) {
     }
 
     exports.draw = function() {
-        canvas.width = canvas.width;
+        clearCanvas();
         for(var i = 0; i < sprites.length; i++){
-            size = 10
             if (sprites[i].type == "player") {
-                ctx.fillStyle = toCss([255,0,255,255]);
-                size = 10
+                drawCircle(sprites[i].location, 10, [255,0,255,255]);
+                drawCircle(sprites[i].aiming, 2, [255,0,0,255]);
+                drawLine(sprites[i].location, sprites[i].aiming, [255,0,0,128])
             } else {
-                ctx.fillStyle = toCss([255,255,255,255]);
-                size = 3
+                drawCircle(sprites[i].location, 3, [255,255,255,255]);
             }
-            ctx.beginPath();
-            ctx.arc(sprites[i].location[0], sprites[i].location[1], size, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.fill();
         }
+    }
+
+    var clearCanvas = function() {
+        canvas.width = canvas.width;
+    };
+
+    var drawCircle = function(location, size, color) {
+        ctx.fillStyle = toCss(color);
+        ctx.beginPath();
+        ctx.arc(location[0], location[1], size, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fill();
+    };
+
+    var drawLine = function(locationa, locationb, color) {
+        ctx.strokeStyle = toCss(color);
+        ctx.beginPath();
+        ctx.moveTo(locationa[0],locationa[1]);
+        ctx.lineTo(locationb[0],locationb[1]);
+        ctx.stroke();
     }
 
 });
