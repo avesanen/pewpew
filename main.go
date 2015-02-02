@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/avesanen/vector"
 	"github.com/avesanen/websocks"
 	"github.com/zenazn/goji"
 	"log"
@@ -30,7 +31,7 @@ func main() {
 		// Add player to the game
 		p := &player{}
 		p.Type = "player"
-		p.SetLocation(Vector{100, 100})
+		p.SetLocation(vector.Vector{100, 100})
 		g.Players = append(g.Players, p)
 
 		// When player disconnects, remove it from game.
@@ -52,13 +53,14 @@ func main() {
 			}
 
 			// Set player velocity from event
-			v := Vector{e.X - p.Location[0], e.Y - p.Location[1]}
-			v.SetLength(200)
+			v := vector.Vector{e.X - p.Location[0], e.Y - p.Location[1]}
+			v.SetLength(400)
 
 			// Create new bullet
 			b := &bullet{}
 			b.Type = "bullet"
 			b.SetVelocity(v)
+			b.Shooter = p
 			b.SetLocation(p.Location)
 
 			// Append bullet to game
@@ -73,7 +75,7 @@ func main() {
 				log.Println("Can't unmarshal:", err.Error())
 				return
 			}
-			p.Aiming = Vector{e.X, e.Y}
+			p.Aiming = vector.Vector{e.X, e.Y}
 		})
 
 		c.On("keyup", func(m websocks.Msg) {

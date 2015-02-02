@@ -5,14 +5,15 @@ requirejs.config({
 	}
 });
 
-require(["app/keyboard", "app/sprites", "app/particles", "app/sfx", "app/websocket"],
-	function (keyboard, sprites, particles, sfx, websocket) {
+require(["app/keyboard", "app/gore", "app/sprites", "app/particles", "app/sfx", "app/websocket"],
+	function (keyboard, gore, sprites, particles, sfx, websocket) {
 		var fps = 60;
 		websocket.connect();
 		
 		// Initialize mainCanvas
 		particles.init('particleCanvas');
 		sprites.init('spriteCanvas');
+		gore.init('goreCanvas');
 
 		keyboard.bindKeyup(function(e){
 			websocket.send('keyup', JSON.stringify({"key":e.keyCode}));
@@ -40,6 +41,13 @@ require(["app/keyboard", "app/sprites", "app/particles", "app/sfx", "app/websock
 			entities = gamestate.players;
 			if (gamestate.bullets) {
 				entities = entities.concat(gamestate.bullets);
+				for(var i = 0; i < entities.length; i++){
+					if (entities[i].collisions) {
+						for (var j = 0; j < entities[i].collisions.length; j++) {
+							gore.splatter(entities[i].collisions[j]);
+						}
+					}
+				}
 			}
 			sprites.setSprites(entities);
 		});

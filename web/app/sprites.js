@@ -36,8 +36,14 @@ define(['exports'], function (exports) {
                 drawCircle(sprites[i].location, 10, [255,0,255,255]);
                 drawCircle(sprites[i].aiming, 2, [255,0,0,255]);
                 drawLine(sprites[i].location, sprites[i].aiming, [255,0,0,128])
-            } else {
+                for (var j = 0; j < sprites[i].targets.length; j++) {
+                    drawCircle(sprites[i].targets[j], 2, [255,255,255,255]);
+                }
+            } else if (sprites[i].type == "bullet") {
                 drawCircle(sprites[i].location, 3, [255,255,255,255]);
+                for (var j = 0; j < sprites[i].collisions.length; j++) {
+                    drawCircle(sprites[i].collisions[j], 2, [255,0,0,255]);
+                }
             }
         }
     }
