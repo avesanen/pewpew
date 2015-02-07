@@ -1,5 +1,4 @@
 define(function(require){
-
 		var fps = 60;
 		var particles = require("app/particles");
 		var sprites = require("app/sprites");

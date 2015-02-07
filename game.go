@@ -89,10 +89,15 @@ func (g *game) update() {
 	dt := time.Since(g.LastUpdate)
 	for _, b := range g.Bullets {
 		b.update(g, dt)
+		// Remove all bullets that are dead.
+		var newBullets []*bullet
+		for _, k := range g.Bullets {
+			if !k.Dead {
+				newBullets = append(newBullets, k)
+			}
+		}
+		g.Bullets = newBullets
 	}
-	/*for _, t := range g.Tiles {
-		t.update(g, dt)
-	}*/
 	for _, p := range g.Players {
 		p.update(g, dt)
 	}
