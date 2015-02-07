@@ -2,26 +2,73 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/avesanen/vector"
+	"log"
 	"time"
 )
 
+type collision struct {
+	Collider string  `json:"collider"`
+	Target   string  `json:"target"`
+	Position *Vector `json:"position"`
+}
+
 type game struct {
-	Players    []*player  `json:"players"`
-	Bullets    []*bullet  `json:"bullets"`
-	GameArea   [2]float64 `json:"gameArea"`
 	LastUpdate time.Time
+	GameArea   [2]float64   `json:"gameArea"`
+	Tiles      []*tile      `json:"tiles"`
+	Players    []*player    `json:"players"`
+	Bullets    []*bullet    `json:"bullets"`
+	Collisions []*collision `json:"collisions"`
 }
 
 func (g *game) getState() []byte {
-	b, err := json.Marshal(g)
-	if err != nil {
-		return nil
-	}
+	b, _ := json.Marshal(g)
 	return b
 }
 
-func (g *game) deleteBullet(b *bullet) {
+func (g *game) newPlayer(position *Vector, name string) *player {
+	p := &player{}
+	p.Id = Uuid()
+	p.Radius = 1
+	p.Position = position
+	p.Velocity = &Vector{0, 0}
+	p.Name = name
+	g.Players = append(g.Players, p)
+	log.Println("newplayer", p.Position, p.Velocity)
+	return p
+}
+
+func (g *game) newBullet(position *Vector, velocity *Vector, firedBy string) *bullet {
+	b := &bullet{}
+	b.Id = Uuid()
+	b.Radius = 0.1
+	b.Position = position
+	b.Velocity = velocity
+	b.FiredBy = firedBy
+	g.Bullets = append(g.Bullets, b)
+	return b
+}
+
+func (g *game) newTile(position *Vector, width, height float64) *tile {
+	t := &tile{}
+	t.Id = Uuid()
+	t.Width = width
+	t.Height = height
+	t.Position = position
+	t.Velocity = &Vector{0, 0}
+	g.Tiles = append(g.Tiles, t)
+	return t
+}
+
+func (g *game) rmPlayer(p *player) {
+	for i, k := range g.Players {
+		if k == p {
+			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+		}
+	}
+}
+
+func (g *game) rmBullet(b *bullet) {
 	for i, k := range g.Bullets {
 		if k == b {
 			g.Bullets = append(g.Bullets[:i], g.Bullets[i+1:]...)
@@ -29,105 +76,25 @@ func (g *game) deleteBullet(b *bullet) {
 	}
 }
 
+func (g *game) rmTile(t *tile) {
+	for i, k := range g.Tiles {
+		if k == t {
+			g.Tiles = append(g.Tiles[:i], g.Tiles[i+1:]...)
+		}
+	}
+}
+
 func (g *game) update() {
-	for _, p := range g.Players {
-		p.update(time.Since(g.LastUpdate))
-		if p.Location[0] < 0.0 {
-			p.Location[0] = 0.0
-		}
-		if p.Location[1] < 0.0 {
-			p.Location[1] = 0.0
-		}
-		if p.Location[0] > g.GameArea[0] {
-			p.Location[0] = g.GameArea[0]
-		}
-		if p.Location[1] > g.GameArea[1] {
-			p.Location[1] = g.GameArea[1]
-		}
-		p.Targets = []vector.Vector{}
-		for _, p2 := range g.Players {
-			if p2 != p {
-				cols := vector.CircleCollision(p.Location, p.Aiming, p2.Location, 10)
-				if len(cols) > 0 {
-					p.Targets = append(p.Targets, cols...)
-				}
-			}
-		}
-	}
-
-	var newbullets []*bullet
+	g.Collisions = nil
+	dt := time.Since(g.LastUpdate)
 	for _, b := range g.Bullets {
-		b.Collisions = []vector.Vector{}
-		for _, p := range g.Players {
-			var path vector.Vector
-			path[0] = b.Location[0] + b.Velocity[0]*time.Since(g.LastUpdate).Seconds()
-			path[1] = b.Location[1] + b.Velocity[1]*time.Since(g.LastUpdate).Seconds()
-			cols := vector.CircleCollision(b.Location, path, p.Location, 10)
-			if len(cols) > 0 && b.Shooter != p {
-				b.Collisions = append(b.Collisions, cols...)
-			}
-		}
-		b.update(time.Since(g.LastUpdate))
-		if b.Location[0] > 0.0 && b.Location[0] < g.GameArea[0] &&
-			b.Location[1] > 0.0 && b.Location[1] < g.GameArea[1] {
-			newbullets = append(newbullets, b)
-		}
+		b.update(g, dt)
 	}
-	g.Bullets = newbullets
+	/*for _, t := range g.Tiles {
+		t.update(g, dt)
+	}*/
+	for _, p := range g.Players {
+		p.update(g, dt)
+	}
 	g.LastUpdate = time.Now()
-}
-
-// Physics sub-entity
-type physics struct {
-	Location vector.Vector `json:"location"`
-	Velocity vector.Vector `json:"velocity"`
-}
-
-func (p *physics) GetLocation() vector.Vector {
-	return p.Location
-}
-
-func (p *physics) GetVelocity() vector.Vector {
-	return p.Velocity
-}
-
-func (p *physics) SetVelocity(v vector.Vector) {
-	p.Velocity = v
-}
-
-func (p *physics) SetLocation(v vector.Vector) {
-	p.Location = v
-}
-
-func (p *physics) update(dt time.Duration) {
-	p.Location[0] += p.Velocity[0] * dt.Seconds()
-	p.Location[1] += p.Velocity[1] * dt.Seconds()
-}
-
-// Entity type
-type entity struct {
-	Type string `json:"type"`
-	physics
-}
-
-// Player entity
-type player struct {
-	entity
-	Aiming  vector.Vector   `json:"aiming"`
-	Targets []vector.Vector `json:"targets"`
-}
-
-func (p *player) update(dt time.Duration) {
-	p.entity.update(dt)
-}
-
-// Bullet entity
-type bullet struct {
-	entity
-	Collisions []vector.Vector `json:"collisions"`
-	Shooter    *player         `json:"-"`
-}
-
-func (b *bullet) update(dt time.Duration) {
-	b.entity.update(dt)
 }

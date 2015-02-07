@@ -23,12 +23,12 @@ define(['exports'], function (exports) {
     }
 
     window.onkeydown = function(e){
-        e.preventDefault();
+        //e.preventDefault();
         onKeyboard(e);
     };
 
     window.onkeyup = function(e){
-        e.preventDefault();
+        //e.preventDefault();
         onKeyboard(e);
     };
 

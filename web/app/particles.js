@@ -6,8 +6,8 @@ define(['exports'], function (exports) {
         canvas = document.getElementById(canvasId);
         ctx = canvas.getContext('2d');
         document.body.onresize = function(){
-  			ctx.canvas.width = window.innerWidth;
-  			ctx.canvas.height = window.innerHeight;
+  			ctx.canvas.width = 800;
+  			ctx.canvas.height = 600;
 		};
 		document.body.onresize();
     };

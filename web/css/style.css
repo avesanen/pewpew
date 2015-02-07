@@ -7,6 +7,17 @@ html, body {
 }
 
 canvas {
+	width: 800px;
+	height: 640px;
 	margin: 0px;
 	position: absolute;
+}
+
+#maskdiv{
+	margin-left: auto;
+    margin-right: auto;
+	position: relative; 
+	width: 800px; 
+	height: 640px; 
+	overflow: hidden;
 }

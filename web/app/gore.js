@@ -5,8 +5,8 @@ define(['exports'], function (exports) {
     exports.init = function(canvasId) {
         canvas = document.getElementById(canvasId);
         ctx = canvas.getContext('2d');
-        ctx.canvas.width = window.innerWidth;
-        ctx.canvas.height = window.innerHeight;
+        //ctx.canvas.width = window.innerWidth;
+        //ctx.canvas.height = window.innerHeight;
     };
 
     exports.splatter = function(location) {

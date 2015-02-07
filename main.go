@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/avesanen/vector"
 	"github.com/avesanen/websocks"
 	"github.com/zenazn/goji"
 	"log"
@@ -24,49 +23,43 @@ type eventKeyboard struct {
 
 func main() {
 	g := &game{}
-	g.GameArea = [2]float64{640, 480}
+	g.GameArea = [2]float64{80, 60}
+	g.newTile(&Vector{40, 30}, 80, 60)
+	g.newTile(&Vector{40, 30}, 5, 5)
 
+	//g.newTile(&Vector{g.GameArea[0] / 2, g.GameArea[1] / 2}, g.GameArea[0], g.GameArea[1])
 	server := websocks.NewServer()
+
+	// When a player connects.
 	server.OnConnect(func(c *websocks.Conn) {
 		// Add player to the game
-		p := &player{}
-		p.Type = "player"
-		p.SetLocation(vector.Vector{100, 100})
-		g.Players = append(g.Players, p)
+		startingPosition := &Vector{40, 32}
+		name := "greg"
+		p := g.newPlayer(startingPosition, name)
+		log.Println(p.Position, p.Velocity)
 
 		// When player disconnects, remove it from game.
 		c.On("disconnect", func(m websocks.Msg) {
-			for i, k := range g.Players {
-				if k == p {
-					g.Players = append(g.Players[:i], g.Players[i+1:]...)
-				}
-			}
+			g.rmPlayer(p)
 		})
 
+		// When player clicks, fire a bullet.
 		c.On("mousedown", func(m websocks.Msg) {
 			// Unmarshal mousedown event
 			var e eventMouseDown
+			log.Println(string(m.Message))
 			err := json.Unmarshal([]byte(m.Message), &e)
 			if err != nil {
 				log.Println("Can't unmarshal:", err.Error())
 				return
 			}
-
-			// Set player velocity from event
-			v := vector.Vector{e.X - p.Location[0], e.Y - p.Location[1]}
-			v.SetLength(400)
-
-			// Create new bullet
-			b := &bullet{}
-			b.Type = "bullet"
-			b.SetVelocity(v)
-			b.Shooter = p
-			b.SetLocation(p.Location)
-
-			// Append bullet to game
-			g.Bullets = append(g.Bullets, b)
+			pos := &Vector{p.Position.X, p.Position.Y}
+			vel := &Vector{p.LookingAt.X, p.LookingAt.Y}
+			vel = vel.Sub(pos).Normalize().Mul(50)
+			g.newBullet(pos, vel, p.Id)
 		})
 
+		// When player moves mouse, aim at the location.
 		c.On("mouseover", func(m websocks.Msg) {
 			// Unmarshal mousedown event
 			var e eventMouseDown
@@ -75,7 +68,7 @@ func main() {
 				log.Println("Can't unmarshal:", err.Error())
 				return
 			}
-			p.Aiming = vector.Vector{e.X, e.Y}
+			p.LookingAt = &Vector{e.X, e.Y}
 		})
 
 		c.On("keyup", func(m websocks.Msg) {
@@ -87,13 +80,13 @@ func main() {
 			}
 			switch e.KeyCode {
 			case 65:
-				p.Velocity[0] += 100
+				p.Velocity.X += 10
 			case 68:
-				p.Velocity[0] -= 100
+				p.Velocity.X -= 10
 			case 87:
-				p.Velocity[1] += 100
+				p.Velocity.Y += 10
 			case 83:
-				p.Velocity[1] -= 100
+				p.Velocity.Y -= 10
 			}
 		})
 		c.On("keydown", func(m websocks.Msg) {
@@ -105,13 +98,13 @@ func main() {
 			}
 			switch e.KeyCode {
 			case 65:
-				p.Velocity[0] -= 100
+				p.Velocity.X -= 10
 			case 68:
-				p.Velocity[0] += 100
+				p.Velocity.X += 10
 			case 87:
-				p.Velocity[1] -= 100
+				p.Velocity.Y -= 10
 			case 83:
-				p.Velocity[1] += 100
+				p.Velocity.Y += 10
 			}
 		})
 
@@ -125,6 +118,6 @@ func main() {
 		for _, c := range server.Conns {
 			c.Send(websocks.Msg{Type: "gamestate", Message: string(g.getState())})
 		}
-		time.Sleep(time.Second / 15)
+		time.Sleep(time.Second / 10)
 	}
 }
